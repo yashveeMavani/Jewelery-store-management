@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sales Invoice</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+        }
+        .container {
+            width: fit-content;
+            margin: 20px auto;
+            border: 1px solid #ddd;
+            padding: 20px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        .header h1 {
+            margin: 0;
+        }
+        .details {
+            margin-bottom: 20px;
+        }
+        .details p {
+            margin: 5px 0;
+        }
+        .table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+        .table th, .table td {
+            border: 1px solid #ddd;
+            padding: 8px;
+            text-align: center;
+        }
+        .table th {
+            background-color: #f4f4f4;
+        }
+        .footer {
+            margin-top: 20px;
+            text-align: center;
+            font-size: 14px;
+            color: #777;
+        }
+        .total {
+            text-align: right;
+            margin-top: 20px;
+        }
+        .total p {
+            font-size: 16px;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Purchase Invoice</h1>
+        </div>
+
+        <div class="details">
+            <p><strong>Client Name:</strong> {{client_name}}</p>
+            <p><strong>Date:</strong> {{date}}</p>
+        </div>
+
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>Category</th>
+                    <th>Gross Weight</th>
+                    <th>Net Weight</th>
+                    <th>Stone Weight</th>
+                    <th>Rate</th>
+                    <th>Amount</th>
+                </tr>
+            </thead>
+            <tbody>
+                {{#each data}}
+                <tr>
+                    <td>{{this.Categoryname}}</td>
+                    <td>{{this.gross_weight}}</td>
+                    <td>{{this.net_weight}}</td>
+                    <td>{{this.stone_weight}}</td>
+                    <td>{{this.rate}}</td>
+                    <td>{{this.amount}}</td>
+                </tr>
+                {{/each}}
+            </tbody>
+        </table>
+
+        <div class="total">
+            <p><strong>Total Amount:</strong> ₹{{totalAmount}}</p>
+        </div>
+
+        <div class="footer">
+            <p>Thank you!</p>
+        </div>
+    </div>
+</body>
+</html>
