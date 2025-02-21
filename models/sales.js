@@ -28,14 +28,23 @@ const Sales = sequelize.define('Sales', {
       total_amount: {
         type: DataTypes.DECIMAL(10, 2),
         allowNull: false
-      }
-    });
+      },
+      borrowed_amount: {
+        type: DataTypes.DECIMAL(10, 2),
+        allowNull: false,
+        defaultValue: 0.00,
+      },
+      net_invoice_amount: {
+        type: DataTypes.DECIMAL(10, 2),
+        allowNull: false,
+      },
+    }); 
   
       Sales.hasMany(SalesOrder, { foreignKey: 'sales_id', as: 'sale_orders' });
       SalesOrder.belongsTo(Sales, { foreignKey: 'sales_id', as: 'sales' });
       Client.hasMany(Sales, { foreignKey: 'client_id', as: 'sales' });
       Sales.belongsTo(Client, { foreignKey: 'client_id', as: 'client' });
-
+      // Sales.belongsTo(models.Client, { foreignKey: "client_id" });
 
 
   
