@@ -11,5 +11,6 @@ router.get('/sales/csv', getSalesCsvReport);
 router.get('/balance-sheet/pdf', getBalanceSheetPdfReport);
 router.get('/balance-sheet/csv',getBalanceSheetCsvReport);
 
-module.exports = router;
+router.get('/reports/purchase/csv',getPurchaseCsvReport);
+module.exports = router; 
 
