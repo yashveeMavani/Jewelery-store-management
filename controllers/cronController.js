@@ -1,9 +1,10 @@
 const pool = require('../config/config'); // Import database configuration
 
 // Daily stock log (runs at 11:00 PM via cron job)
-exports.generateDailyStockLog = async (req, res) => {
+exports.generateDailyStockLog = async (req, res,next) => {
   try {
     // Fetch all stock data
+    
     const stockData = await pool.query('SELECT * FROM stock_data');
 
     // Insert each stock into the stock_logs table with the current date
@@ -19,13 +20,14 @@ exports.generateDailyStockLog = async (req, res) => {
 
     res.status(200).json({ message: 'Daily stock log generated successfully.' });
   } catch (error) {
+    next(error);
     console.error('Error generating stock log:', error);
-    res.status(500).json({ error: 'Internal server error.' });
+    // res.status(500).json({ error: 'Internal server error.' });
   }
 };
 
 // Update Rate Master (runs at 1:00 AM via cron job)
-exports.updateRateMaster = async (req, res) => {
+exports.updateRateMaster = async (req, res,next) => {
   try {
     // Delete the old record
     await pool.query('DELETE FROM rate_master');
@@ -43,8 +45,9 @@ exports.updateRateMaster = async (req, res) => {
     );
 
     res.status(200).json({ message: 'Rate master updated successfully.' });
-  } catch (error) {
+  } catch (error) { 
+    next(error);
     console.error('Error updating rate master:', error);
-    res.status(500).json({ error: 'Internal server error.' });
+    // res.status(500).json({ error: 'Internal server error.' });
   }
 };

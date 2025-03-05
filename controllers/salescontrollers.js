@@ -2,7 +2,9 @@ const salesservices = require("../services/salesservices");
 const bilservices = require("../services/bilservices");
 const { updateStockFromSales } = require("./stockController");
 const partialPaymentServices = require("../services/partialPaymentServices");
-exports.createSales = async (req, res) => {
+
+
+exports.createSales = async (req, res,next) => {
   try {
     const { total_invoice_amount, borrowed_amount = 0 } = req.body;
 
@@ -32,11 +34,12 @@ exports.createSales = async (req, res) => {
     });
   } catch (error) {
     console.log(error);
-    res.status(400).json({ success: false, message: error.message });
+    next(error);
+    // res.status(400).json({ success: false, message: error.message });
   }
 };
 
-exports.listSales = async (req, res) => {
+exports.listSales = async (req, res,next) => {
   try {
     const sales = await salesservices.listSales(req.query);
     if (sales.count == 0)
@@ -46,12 +49,13 @@ exports.listSales = async (req, res) => {
 
     res.status(200).json({ success: true, data: sales });
   } catch (error) {
-    res.status(400).json({ success: false, message: error.message });
+    next(error);
+    // res.status(400).json({ success: false, message: error.message });
   }
 };
 
 // Get Single Purchase Voucher
-exports.getSales = async (req, res) => {
+exports.getSales = async (req, res,next) => {
   try {
     const sales = await salesservices.getSales();
 
@@ -62,60 +66,66 @@ exports.getSales = async (req, res) => {
     }
     res.status(200).json({ success: true, data: sales });
   } catch (error) {
-    res.status(400).json({ success: false, message: error.message });
+    next(error);
+    // res.status(400).json({ success: false, message: error.message });
   }
 };
 
-exports.deleteSales = async (req, res) => {
+exports.deleteSales = async (req, res,next) => {
   try {
     const sales = await salesservices.deleteSales();
 
     res.status(200).json({ success: true, msg: "delete successfully" });
   } catch (error) {
-    res.status(400).json({ success: false, message: error.message });
+    next(error);
+    // res.status(400).json({ success: false, message: error.message });
   }
 };
 
 // Partial Payment Endpoints
-exports.createPartialPayment = async (req, res) => {
+exports.createPartialPayment = async (req, res,next) => {
   try {
     const paymentData = req.body;
     const result = await partialPaymentServices.createPartialPayment(paymentData);
     res.status(201).json(result);
   } catch (error) {
     console.error("Error creating partial payment:", error);
-    res.status(500).json({ message: "Failed to create partial payment", error: error.message });
+    next(error);
+    // res.status(500).json({ message: "Failed to create partial payment", error: error.message });
   }
 };
 
-exports.listBorrowedAmounts = async (req, res) => {
+exports.listBorrowedAmounts = async (req, res,next) => {
   try {
     const result = await partialPaymentServices.listBorrowedAmounts();
     res.status(200).json(result);
   } catch (error) {
     console.error("Error listing borrowed amounts:", error);
-    res.status(500).json({ message: "Failed to list borrowed amounts", error: error.message });
+    next(error);
+    // res.status(500).json({ message: "Failed to list borrowed amounts", error: error.message });
   }
 };
 
-exports.getPaidAmountReport = async (req, res) => {
+exports.getPaidAmountReport = async (req, res,next) => {
   try {
     const result = await partialPaymentServices.getPaidAmountReport();
     console.log(`Paid amount report result: ${JSON.stringify(result, null, 2)}`);
     res.status(200).json(result);
   } catch (error) {
     console.error("Error getting paid amount report:", error);
-    res.status(500).json({ message: "Failed to get paid amount report", error: error.message });
+    next(error);
+    // res.status(500).json({ message: "Failed to get paid amount report", error: error.message });
   }
 };
 
-exports.getUnpaidAmountReport = async (req, res) => {
+exports.getUnpaidAmountReport = async (req, res,next) => {
   try {
     const result = await partialPaymentServices.getUnpaidAmountReport();
     res.status(200).json(result);
   } catch (error) {
     console.error("Error getting unpaid amount report:", error);
-    res.status(500).json({ message: "Failed to get unpaid amount report", error: error.message });
+    next(error);
+    // res.status(500).json({ message: "Failed to get unpaid amount report", error: error.message });
   }
 };
 

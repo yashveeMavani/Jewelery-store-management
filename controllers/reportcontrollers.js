@@ -333,7 +333,7 @@ const Purchase=require('../models/purchase');
 //     }
 // };
 
-exports.getPurchaseCsvReport = async (req, res) => {
+exports.getPurchaseCsvReport = async (req, res,next) => {
     try {
         const { page = 1, limit = 10, client_id, date_from, date_to } = req.query;
  
@@ -358,11 +358,12 @@ exports.getPurchaseCsvReport = async (req, res) => {
 
     } catch (error) {
         console.error(error);
-        res.status(500).json({ error: 'Failed to fetch purchase reports' });
+        next(error);
+        // res.status(500).json({ error: 'Failed to fetch purchase reports' });
     }
 };
 
-exports.getPurchasePdfReport = async (req, res) => {
+exports.getPurchasePdfReport = async (req, res,next) => {
     try {
         const { page = 1, limit = 10, client_id, date_from, date_to } = req.query;
 
@@ -395,11 +396,12 @@ exports.getPurchasePdfReport = async (req, res) => {
 
     } catch (error) {
         console.error(error);
-        res.status(500).json({ error: "Failed to fetch purchase reports" });
+        next(error);
+        // res.status(500).json({ error: "Failed to fetch purchase reports" });
     }
 };
 
-exports.getSalesCsvReport = async (req, res) => {
+exports.getSalesCsvReport = async (req, res,next) => {
     try {
         const { page = 1, limit = 10, client_id, date_from, date_to } = req.query;
 
@@ -423,11 +425,12 @@ exports.getSalesCsvReport = async (req, res) => {
 
     } catch (error) {
         console.error("Error fetching sales report:", error);
-        res.status(500).json({ error: "Internal Server Error" });
+        next(error);
+        // res.status(500).json({ error: "Internal Server Error" });
     }
 };
 
-exports.getSalesPdfReport = async (req, res) => {
+exports.getSalesPdfReport = async (req, res,next) => {
     try {
       const { page = 1, limit = 10, client_id, date_from, date_to } = req.query;
       const parsedPage = parseInt(page, 10);
@@ -472,12 +475,13 @@ exports.getSalesPdfReport = async (req, res) => {
   
     } catch (error) {
       console.error("Error in getSalesPdfReport:", error);
-      return res.status(500).json({ error: "Failed to fetch sales reports" });
+      next(error);
+      // return res.status(500).json({ error: "Failed to fetch sales reports" });
     }
 }; 
   
 
-exports.getBalanceSheetCsvReport = async (req, res) => {
+exports.getBalanceSheetCsvReport = async (req, res,next) => {
     try {
         const { date_from, date_to } = req.query;
         console.log("Query Params:", { date_from, date_to });
@@ -498,11 +502,12 @@ exports.getBalanceSheetCsvReport = async (req, res) => {
 
     } catch (error) {
         console.error("Error fetching balance sheet report:", error);
-        res.status(500).json({ error: 'Failed to fetch balance sheet report' });
+        next(error);
+        // res.status(500).json({ error: 'Failed to fetch balance sheet report' });
     }
 };
   
-exports.getBalanceSheetPdfReport = async (req, res) => {
+exports.getBalanceSheetPdfReport = async (req, res,next) => {
     try {
       const [rowsRaw] = await sequelize.query("CALL GetBalanceSheetPdfReport()");
       console.log("Raw rows from procedure:", rowsRaw);
@@ -534,7 +539,8 @@ exports.getBalanceSheetPdfReport = async (req, res) => {
       );
     } catch (error) {
       console.error("Error in getBalanceSheetPdfReport:", error);
-      res.status(500).json({ error: "Failed to fetch balance sheet report" });
+      next(error);
+      // res.status(500).json({ error: "Failed to fetch balance sheet report" });
     }
   };
   

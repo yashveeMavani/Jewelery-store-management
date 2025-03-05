@@ -1,4 +1,6 @@
 const express=require('express');
+
+const errorHandler = require('./middleware/errorHandler');
 const userroutes=require('./routes/userroutes');
 const loginroutes=require('./routes/loginroutes');
 const categoryroutes=require('./routes/categoryroutes')
@@ -9,6 +11,8 @@ const rateroutes = require('./routes/rateroutes')
 const reportroutes=require('./routes/reportroutes')
 const stockroutes=require('./routes/stockRoutes')
 const customOrderRoutes = require('./routes/customOrders');
+
+
 require('./cron/ratecron'); 
 
 
@@ -27,6 +31,11 @@ app.use('/stock',stockroutes);
 app.use('/api/custom-orders', customOrderRoutes);
 app.use('/api', require('./routes/dailyDataRoutes')); 
 
+// app.get('/error', (req, res, next) => {
+//     const error = new Error('This is a test error');
+//     next(error);
+// });
+app.use(errorHandler);
 
 app.listen(port,()=>{
     console.log(`Server is running on port ${port}`);

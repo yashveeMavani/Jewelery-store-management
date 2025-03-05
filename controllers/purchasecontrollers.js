@@ -1,7 +1,7 @@
 const purchaseservices = require("../services/purchaseservices");
 const bilservices = require("../services/bilservices");
 
-exports.createPurchase = async (req, res) => {
+exports.createPurchase = async (req, res,next) => {
   try {
     const purchase = await purchaseservices.createPurchase(req.body);
     if (purchase == "not client present in a database")
@@ -12,13 +12,13 @@ exports.createPurchase = async (req, res) => {
     res.status(201).json({ success: true, data: purchase });
   } catch (error) {
     console.log(error);
-
-    res.status(400).json({ success: false, message: error.message });
+    next(error);
+    // res.status(400).json({ success: false, message: error.message });
   }
 };
 
 // List Purchases with Filters
-exports.listPurchases = async (req, res) => {
+exports.listPurchases = async (req, res,next) => {
   try {
     const purchases = await purchaseservices.listPurchase(req.query);
     if (purchases.count == 0)
@@ -28,12 +28,13 @@ exports.listPurchases = async (req, res) => {
 
     res.status(200).json({ success: true, data: purchases });
   } catch (error) {
-    res.status(400).json({ success: false, message: error.message });
+    next(error);
+    // res.status(400).json({ success: false, message: error.message });
   }
 };
 
 // Get Single Purchase Voucher
-exports.getPurchase = async (req, res) => {
+exports.getPurchase = async (req, res,next) => {
   try {
     const purchase = await purchaseservices.getPurchase();
 
@@ -45,6 +46,7 @@ exports.getPurchase = async (req, res) => {
 
     res.status(200).json({ success: true, data: purchase });
   } catch (error) {
-    res.status(400).json({ success: false, message: error.message });
+    next(error);
+    // res.status(400).json({ success: false, message: error.message });
   }
 };

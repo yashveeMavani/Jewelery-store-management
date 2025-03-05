@@ -2,7 +2,7 @@ const jwt = require("jsonwebtoken");
 const { User } = require("../models/User");
 // const bcrypt = require("bcrypt");
 
-exports.login = async (req, res) => {
+exports.login = async (req, res,next) => {
   const { username, password } = req.body;
   try {
     const user = await User.findOne({ where: { username: username } });
@@ -16,6 +16,7 @@ exports.login = async (req, res) => {
     res.status(401).json({ err: "Invalid username or password" });
   } catch (err) {
     console.log(err);
+    next(err);
     res.status(401).json({ err: err });
   }
 };

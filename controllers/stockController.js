@@ -4,7 +4,7 @@ const StockData = require("../models/StockData");
 const SalesOrder = require("../models/sales_order");
 const { Sequelize } = require("sequelize");
 
-exports.updateStockFromPurchases = async (req, res) => {
+exports.updateStockFromPurchases = async (req, res,next) => {
   try {
     // Aggregate total stock purchased
     const stockSummary = await PurchaseOrder.findAll({
@@ -55,7 +55,8 @@ exports.updateStockFromPurchases = async (req, res) => {
     res.json({ message: "Stock data updated successfully!" });
   } catch (error) {
     console.error("Error updating stock data:", error);
-    res.status(500).json({ error: error.message });
+    next(error);
+    // res.status(500).json({ error: error.message });
   }
 };
 
