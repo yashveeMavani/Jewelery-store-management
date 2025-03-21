@@ -3,130 +3,158 @@ const bilservices = require("../services/bilservices");
 const { updateStockFromSales } = require("./stockController");
 const partialPaymentServices = require("../services/partialPaymentServices");
 
-
-exports.createSales = async (req, res,next) => {
+exports.createSales = async (req, res, next) => {
   try {
+    const { userrole, branch_id } = req.user; 
     const { total_invoice_amount, borrowed_amount = 0 } = req.body;
 
-    if (borrowed_amount > total_invoice_amount) {
-      return res.status(400).json({ success: false, message: "Borrowed amount cannot exceed total invoice amount" });
+    // Only super_admin or admin can create sales
+    if (userrole !== "super_admin" && userrole !== "admin") {
+      return res.status(403).json({ success: false, message: "You are not authorized to create sales." });
     }
 
-    // Calculate net invoice amount after deducting borrowed amount
-    req.body.net_invoice_amount = total_invoice_amount - borrowed_amount;
+    if (borrowed_amount > total_invoice_amount) {
+      return res.status(400).json({ success: false, message: "Borrowed amount cannot exceed total invoice amount." });
+    }
 
-    // Create sale entry
+    req.body.branch_id = branch_id;
+    req.body.net_invoice_amount = total_invoice_amount - borrowed_amount; 
     const sales = await salesservices.createSales(req.body);
-    
-
-    // Generate sale bill
     await bilservices.getSaleBil(sales.client_id, res);
+    const stockUpdateStatus = await updateStockFromSales(branch_id);
 
-    // Update stock after sale
-    const stockUpdateStatus = await updateStockFromSales();
-    console.log("Stock Update Status => ", stockUpdateStatus);
-
-    res.json({
+    res.status(201).json({
       success: true,
-      message: "Sale created successfully",
+      message: "Sale created successfully.",
       sales,
       stockUpdateStatus,
     });
   } catch (error) {
-    console.log(error);
+    console.error("Error in createSales:", error.message);
     next(error);
-    // res.status(400).json({ success: false, message: error.message });
   }
 };
 
-exports.listSales = async (req, res,next) => {
+exports.listSales = async (req, res, next) => {
   try {
-    const sales = await salesservices.listSales(req.query);
-    if (sales.count == 0)
-      return res
-        .status(200)
-        .json({ success: true, data: "not present any data of client" });
+    const { userrole, branch_id } = req.user; 
+    const listData = { ...req.query, branch_id };
+
+    // Super Admin can view all sales; others can only view sales for their assigned branch
+    if (userrole !== "super_admin") {
+      listData.branch_id = branch_id;
+    }
+
+    const sales = await salesservices.listSales(listData);
+
+    if (sales.count === 0) {
+      return res.status(200).json({ success: true, message: "No sales data found." });
+    }
 
     res.status(200).json({ success: true, data: sales });
   } catch (error) {
+    console.error("Error in listSales:", error.message);
     next(error);
-    // res.status(400).json({ success: false, message: error.message });
   }
 };
 
-// Get Single Purchase Voucher
-exports.getSales = async (req, res,next) => {
+exports.getSales = async (req, res, next) => {
   try {
-    const sales = await salesservices.getSales();
+    const { id } = req.params;
+    const { branch_id } = req.user; 
+
+    const sales = await salesservices.getSales(id, branch_id);
 
     if (!sales) {
-      return res
-        .status(404)
-        .json({ success: false, message: "sales not found" });
+      return res.status(404).json({ success: false, message: "Sales not found." });
     }
+
     res.status(200).json({ success: true, data: sales });
   } catch (error) {
+    console.error("Error in getSales:", error.message);
     next(error);
-    // res.status(400).json({ success: false, message: error.message });
   }
 };
 
-exports.deleteSales = async (req, res,next) => {
+exports.deleteSales = async (req, res, next) => {
   try {
-    const sales = await salesservices.deleteSales();
+    const { id } = req.params;
+    const { userrole, branch_id } = req.user; 
 
-    res.status(200).json({ success: true, msg: "delete successfully" });
+    // Only super_admin or admin can delete sales
+    if (userrole !== "super_admin" && userrole !== "admin") {
+      return res.status(403).json({ success: false, message: "You are not authorized to delete sales." });
+    }
+
+    await salesservices.deleteSales(id,branch_id);
+
+    res.status(200).json({ success: true, message: "Sales deleted successfully." });
   } catch (error) {
+    console.error("Error in deleteSales:", error.message);
     next(error);
-    // res.status(400).json({ success: false, message: error.message });
   }
 };
 
 // Partial Payment Endpoints
-exports.createPartialPayment = async (req, res,next) => {
+exports.createPartialPayment = async (req, res, next) => {
   try {
-    const paymentData = req.body;
+    const paymentData = { ...req.body, branch_id: req.user.branch_id };
     const result = await partialPaymentServices.createPartialPayment(paymentData);
-    res.status(201).json(result);
+    res.status(201).json({ success: true, data: result });
   } catch (error) {
-    console.error("Error creating partial payment:", error);
+    console.error("Error creating partial payment:", error.message);
     next(error);
-    // res.status(500).json({ message: "Failed to create partial payment", error: error.message });
   }
 };
 
-exports.listBorrowedAmounts = async (req, res,next) => {
+exports.listBorrowedAmounts = async (req, res, next) => {
   try {
-    const result = await partialPaymentServices.listBorrowedAmounts();
-    res.status(200).json(result);
+    const { userrole, branch_id } = req.user;
+   
+
+    if (userrole !== "super_admin" && userrole !== "admin") {
+      return res.status(403).json({ success: false, message: "You are not authorized to view borrowed amounts." });
+    }
+
+    const result = await partialPaymentServices.listBorrowedAmounts(branch_id);
+  
+    res.status(200).json({ success: true, data: result });
   } catch (error) {
-    console.error("Error listing borrowed amounts:", error);
+    console.error("Error listing borrowed amounts:", error.message);
     next(error);
-    // res.status(500).json({ message: "Failed to list borrowed amounts", error: error.message });
   }
 };
 
-exports.getPaidAmountReport = async (req, res,next) => {
+exports.getPaidAmountReport = async (req, res, next) => {
   try {
-    const result = await partialPaymentServices.getPaidAmountReport();
-    console.log(`Paid amount report result: ${JSON.stringify(result, null, 2)}`);
-    res.status(200).json(result);
+    const { userrole, branch_id } = req.user;
+  
+    if (userrole !== "super_admin" && userrole !== "admin") {
+      return res.status(403).json({ success: false, message: "You are not authorized to view the paid amount report." });
+    }
+
+    const result = await partialPaymentServices.getPaidAmountReport(branch_id);
+    
+    res.status(200).json({ success: true, data: result });
   } catch (error) {
-    console.error("Error getting paid amount report:", error);
+    console.error("Error getting paid amount report:", error.message);
     next(error);
-    // res.status(500).json({ message: "Failed to get paid amount report", error: error.message });
   }
 };
 
-exports.getUnpaidAmountReport = async (req, res,next) => {
+exports.getUnpaidAmountReport = async (req, res, next) => {
   try {
-    const result = await partialPaymentServices.getUnpaidAmountReport();
-    res.status(200).json(result);
+    const { userrole, branch_id } = req.user;
+  
+    if (userrole !== "super_admin" && userrole !== "admin") {
+      return res.status(403).json({ success: false, message: "You are not authorized to view the unpaid amount report." });
+    }
+
+    const result = await partialPaymentServices.getUnpaidAmountReport(branch_id);
+   
+    res.status(200).json({ success: true, data: result });
   } catch (error) {
-    console.error("Error getting unpaid amount report:", error);
+    console.error("Error getting unpaid amount report:", error.message);
     next(error);
-    // res.status(500).json({ message: "Failed to get unpaid amount report", error: error.message });
   }
 };
-
-

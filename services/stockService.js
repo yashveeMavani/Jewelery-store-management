@@ -1,22 +1,20 @@
-const StockMaster = require('../models/StockMaster');
-// const StockData = require('../models/StockData');
-
-async function createStockMaster(stockCode, stockName, category) {
-    // Check if stock exists in the StockMaster table
-    const existingStock = await StockMaster.findOne({ where: { stock_code: stockCode } });
+const {StockMaster} = require('../models');
+async function createStockMaster(stockCode, stockName, category, branchId) {
+    const existingStock = await StockMaster.findOne({ 
+        where: { stock_code: stockCode, branch_id: branchId } 
+    });
 
     if (!existingStock) {
-        // If stock doesn't exist, create a new record
         const newStock = await StockMaster.create({
             stock_code: stockCode,
-            stock_name: stockName,  // Ensure stock_name is provided
-            category: category
+            stock_name: stockName,
+            category: category,
+            branch_id: branchId  
         });
         return newStock;
     }
-    return existingStock; // Return existing stock if found
+    return existingStock;
 }
-
 
 module.exports = {
     createStockMaster

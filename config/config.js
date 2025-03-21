@@ -1,17 +1,26 @@
-const {Sequelize}=require('sequelize');
+require('dotenv').config(); 
 
-const sequelize=new Sequelize('jewelry_store','root','Yashvee@3009',{
-    host:'localhost',
-    dialect:'mysql', timezone: '+00:00', 
-    dialectOptions: {
-        timezone: 'Z', 
+module.exports = {
+    development: {
+        username: process.env.DB_USERNAME || "root",
+        password: process.env.DB_PASSWORD || "Yashvee@3009",
+        database: process.env.DB_NAME || "jewelry_store",
+        host: process.env.DB_HOST || "localhost",
+        dialect: "mysql",
+        timezone: '+00:00',
+        dialectOptions: {
+            timezone: 'Z'
+        }
+    },
+    production: {
+        username: process.env.DB_USERNAME,
+        password: process.env.DB_PASSWORD,
+        database: process.env.DB_NAME,
+        host: process.env.DB_HOST,
+        dialect: "mysql",
+        timezone: '+00:00',
+        dialectOptions: {
+            timezone: 'Z'
+        }
     }
-});
-
-sequelize.sync({alter:true})
-  .then(() => console.log('Database synced successfully'))
-  .catch((error) => console.error('Error syncing database:', error));
-
-
-module.exports=sequelize;
-
+};

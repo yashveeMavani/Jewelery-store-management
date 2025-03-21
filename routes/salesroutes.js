@@ -1,17 +1,18 @@
 const express = require('express');
 const router = express.Router();
 const salesController = require('../controllers/salescontrollers');
+const { authenticate, authorize } = require('../middleware/authmiddleware');
 
-router.post('/', salesController.createSales);
-router.get('/', salesController.listSales);
-router.delete('/',salesController.deleteSales);
+router.post('/', authenticate, authorize('super_admin', 'admin'), salesController.createSales);
 
-// Partial Payment Endpoints
-router.post('/partial-payment', salesController.createPartialPayment);
-router.get('/borrowed-amounts', salesController.listBorrowedAmounts);
-router.get('/paid-amount-report', salesController.getPaidAmountReport);
-router.get('/unpaid-amount-report', salesController.getUnpaidAmountReport);
+router.get('/', authenticate, salesController.listSales);
 
-router.get('/:id', salesController.getSales);
+router.get('/borrowed-amounts', authenticate, authorize('super_admin', 'admin'), salesController.listBorrowedAmounts);
+router.get('/paid-amount-report', authenticate, authorize('super_admin', 'admin'), salesController.getPaidAmountReport);
+router.get('/unpaid-amount-report', authenticate, authorize('super_admin', 'admin'), salesController.getUnpaidAmountReport);
+router.get('/:id', authenticate, salesController.getSales);
+
+router.delete('/', authenticate, authorize('super_admin', 'admin'), salesController.deleteSales);
+
 
 module.exports = router;

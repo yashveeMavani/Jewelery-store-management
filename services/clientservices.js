@@ -1,6 +1,5 @@
-const Client= require('../models/client');
-const {Ledger}= require('../models/ledger');
-
+const { Client } = require('../models'); 
+const { Ledger } = require('../models'); 
 exports.createClient = async (clientData,fileData) => {
  
 try{
@@ -28,16 +27,26 @@ exports.createLedger = async (clientData,fileData) => {
     }
     };
 
-exports.getClient = async () => {
+exports.getClient = async (branch_id) => {
     try{
-      return await Client.findAll();
+      return await Client.findAll({ where: { branch_id } });
     }catch(err){
         return err;
     }
 };
+exports.getClientById = async (id) => {
+  try {
+    return await Client.findByPk(id); 
+  } catch (err) {
+    throw new Error('Error fetching client by ID: ' + err.message);
+  }
+};
 exports.updateClient = async (id, clientData,fileData) => {
-  const client=await Client.findByPk(id);
+  const client=await Client.findOne({ where: { id, branch_id: clientData.branch_id } }); 
   console.log(clientData);
+  if (!client) {
+    throw new Error("Client not found or you don't have permission to update it.");
+  }
   
   client.name = clientData.name || client.name;
   client.firm_name = clientData.firm_name || client.firm_name;
@@ -59,8 +68,6 @@ exports.updateClient = async (id, clientData,fileData) => {
 
 exports.updateLedger = async (id, clientData,fileData) => {
     const ledger=await Ledger.findByPk(id);
-
-    // Update ledger entry as well
     if (ledger) {
       ledger.name = clientData.name || ledger.name;
       ledger.firm_name = clientData.firm_name || ledger.firm_name;
@@ -77,16 +84,33 @@ exports.updateLedger = async (id, clientData,fileData) => {
 
   
   };
-exports.deleteClient = async (id) => {
-    const client=await Client.findByPk(id);
 
-  return await client.destroy();
-  
+exports.deleteClient = async (id, branch_id, role) => {
+  try {
+    let client;
+    console.log('Deleting Client with ID:', id, 'Branch ID:', branch_id, 'Role:', role);
+    
+    // Super Admin can delete any client in their branch
+    if (role === 'super_admin') {
+      client = await Client.findOne({ where: { id, branch_id } });
+    } else {
+      client = await Client.findOne({ where: { id, branch_id } });
+    }
+    console.log('Client Query Result:', client);
+    if (!client) {
+      throw new Error("Client not found or you don't have permission to delete it.");
+    }
 
-  };
-
-  exports.deleteLedger = async (id) => {
-    const ledger=await Ledger.findByPk(id);
+    return await client.destroy();
+  } catch (err) {
+    throw new Error('Error deleting client: ' + err.message);
+  }
+};
+  exports.deleteLedger = async (id, branch_id) => {
+    const ledger=await Ledger.findOne({ where: { id, branch_id } });
+    if (!ledger) {
+      throw new Error("Ledger not found or you don't have permission to delete it.");
+    }
   return await ledger.destroy();
   
   };

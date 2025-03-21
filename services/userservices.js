@@ -1,22 +1,18 @@
-// services/userService.js
-const {User}= require('../models/User');
-// const bcrypt = require('bcrypt');
+const { User } = require('../models'); 
 const { Pool } = require('pg');
 const { v4: uuidv4 } = require('uuid');
 const pool = new Pool
 
 exports.createUser = async (userData) => {
-  if (userData.role == 'super_admin') {
+  if (userData.role !== 'super_admin') {
     const existingSuperAdmin = await User.findOne({role:userData.role});
     console.log(existingSuperAdmin);
     if (existingSuperAdmin) {
       throw new Error('A Super Admin already exists.');
     }
   }
-
-  // userData.password = await bcrypt.hash(userData.password, 10);
   return await User.create(userData);
-  
+
 };
 
 exports.updateUser = async (id, userData) => {

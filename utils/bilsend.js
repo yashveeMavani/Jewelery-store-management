@@ -55,10 +55,4 @@ exports.exportToPDF = async (
   } catch (error) {
     console.log(error);
   }
-
-  // pdf.create(html).toStream((err, stream) => {
-  //     if (err) return res.status(500).send('Failed to generate PDF');
-  //     res.attachment(filename);
-  //     stream.pipe(res);
-  // });
 };

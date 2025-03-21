@@ -1,41 +1,39 @@
-// services/rateMasterService.js
-const RateMaster = require('../models/ratemaster');
+const { RateMaster } = require('../models');
 
-
-exports.resetDailyRate = async (newRate) => {
+exports.resetDailyRate = async (newRate, branch_id) => {
     try {
-        await RateMaster.destroy({ truncate: true });
-        
-        return await RateMaster.create({ rate: newRate });
+        await RateMaster.destroy({ where: { branch_id } });
+        return await RateMaster.create({ rate: newRate, branch_id });
     } catch (err) {
-   return err;
+        return err;
     }
 };
-exports.createtRate = async (rate) => {
+
+exports.createRate = async (rate, branch_id) => {
     try {
-        await RateMaster.destroy({ truncate: true });
-        return await RateMaster.create({ rate });
+        await RateMaster.destroy({ where: { branch_id } });  
+        return await RateMaster.create({ rate, branch_id });
     } catch (err) {
-        return err
-      }
+        return err;
+    }
 };
 
-exports.getRate = async () => {
+exports.getRate = async (branch_id) => {
     try {
-        const rate = await RateMaster.findOne();
+        const rate = await RateMaster.findOne({ where: { branch_id } });
         if (!rate) {
-            throw new Error('No rate found');
+            throw new Error('No rate found for this branch');
         }
         return rate;
     } catch (err) {
-         return err;
-            }
+        return err;
+    }
 };
 
-exports.deleteRate = async () => {
+exports.deleteRate = async (branch_id) => {
     try {
-        await RateMaster.destroy({ truncate: true });
+        await RateMaster.destroy({ where: { branch_id } });
     } catch (error) {
-    return err;
+        return error;
     }
 };

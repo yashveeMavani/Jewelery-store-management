@@ -1,10 +1,11 @@
-// routes/rateMasterRoutes.js
 const express = require('express');
 const router = express.Router();
 const rateMasterController = require('../controllers/ratemastercontrollers');
+const { authenticate, authorize } = require('../middleware/authmiddleware');
 
-router.post('/', rateMasterController.createRate); // Upsert Rate
-router.get('/', rateMasterController.getRate);    // Get Rate
-router.delete('/', rateMasterController.deleteRate); // Delete Rate
+
+router.post('/', authenticate, authorize('super_admin', 'admin'), rateMasterController.createRate);
+router.get('/', authenticate, rateMasterController.getRate);
+router.delete('/', authenticate, authorize('super_admin', 'admin'), rateMasterController.deleteRate);
 
 module.exports = router;

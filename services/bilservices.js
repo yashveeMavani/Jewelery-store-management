@@ -1,25 +1,23 @@
-const Purchase = require("../models/purchase");
-const PurchaseOrder = require("../models/purchase_order");
-const Sales = require("../models/sales");
-const SalesOrder = require("../models/sales_order");
-const Client = require("../models/client");
+const { Purchase, PurchaseOrder } = require("../models");
+const { Sales, SalesOrder } = require("../models");
+const { Client } = require("../models");
 const { exportToCSV, exportToPDF } = require("../utils/bilsend");
 
-exports.getPurchaseBill = async (client_id) => {
+
+exports.getPurchaseBill = async (client_id, branch_id) => {
   try {
-    let purchase = {};
-    if (client_id) {
-      purchase = await Purchase.findOne({ where: { client_id: client_id } });
+    console.log(`Fetching purchase report for client_id=${client_id}, branch_id=${branch_id}`);
+
+    const purchase = await Purchase.findOne({ where: { client_id, branch_id } });
+    if (!purchase) {
+      console.error(`No purchase found for client_id=${client_id} and branch_id=${branch_id}`);
+      throw new Error("Data not found");
     }
 
-    // console.log(purchase);
-
-    const whereClause = {};
-    if (client_id && purchase) whereClause.purchase_id = purchase.id;
-    if (!purchase) throw new Error("data not found");
+    console.log(`Purchase found: ${JSON.stringify(purchase)}`);
 
     const purchaseorders = await PurchaseOrder.findAndCountAll({
-      where: whereClause,
+      where: { purchase_id: purchase.id },
       include: [
         {
           model: Purchase,
@@ -28,23 +26,29 @@ exports.getPurchaseBill = async (client_id) => {
         },
       ],
     });
-    console.log("hello Deep", purchaseorders);
 
-    const reportData = purchaseorders.rows.map((purchaseorders) => ({
-      client_name: purchaseorders.purchase.client.name,
-      Categoryname: purchaseorders.category,
-      gross_weight: purchaseorders.gross_weight,
-      net_weight: purchaseorders.net_weight,
-      stone_weight: purchaseorders.stone_weight,
-      rate: purchaseorders.rate,
-      amount: purchaseorders.amount,
+    if (!purchaseorders.rows.length) {
+      console.error(`No purchase orders found for purchase_id=${purchase.id}`);
+      throw new Error("No purchase orders found for the given client.");
+    }
+
+    console.log(`Purchase orders found: ${purchaseorders.rows.length}`);
+
+    const reportData = purchaseorders.rows.map(order => ({
+      client_name: order.purchase.client.name,
+      Categoryname: order.category,
+      gross_weight: order.gross_weight,
+      net_weight: order.net_weight,
+      stone_weight: order.stone_weight,
+      rate: order.rate,
+      amount: order.amount,
     }));
-    let total_amount = 0;
 
-    reportData.forEach((reportData) => {
-      total_amount += parseInt(reportData.amount);
-    });
-    console.log(total_amount);
+    console.log(`Report data: ${JSON.stringify(reportData)}`);
+
+    let total_amount = reportData.reduce((sum, order) => sum + parseInt(order.amount), 0);
+    console.log(`Total amount: ${total_amount}`);
+
     return exportToPDF(
       reportData,
       total_amount,
@@ -53,25 +57,22 @@ exports.getPurchaseBill = async (client_id) => {
       purchaseorders.rows[0].purchase.client.email
     );
   } catch (error) {
-    console.error(error);
+    console.error("Error in getPurchaseBill:", error.message);
     throw new Error("Failed to fetch purchase reports");
   }
 };
 
-exports.getSaleBil = async (client_id) => {
+exports.getSaleBil = async (client_id, branch_id) => {
   try {
-    let sale = {};
-    if (client_id) {
-      sale = await Sales.findOne({ where: { client_id } });
-    }
-    // console.log(sale);
+    console.log(`Fetching sales report for client_id=${client_id}, branch_id=${branch_id}`);
 
-    const whereClause = {};
-    if (client_id && sale) whereClause.sales_id = sale.id;
-    if (!sale) throw new Error("data not found");
+    const sale = await Sales.findOne({ where: { client_id, branch_id } }); 
+    if (!sale) {
+      return { success: false, message: `No sales found for client_id=${client_id} and branch_id=${branch_id}` };
+    }
 
     const salesorders = await SalesOrder.findAndCountAll({
-      where: whereClause,
+      where: { sales_id: sale.id },
       include: [
         {
           model: Sales,
@@ -80,23 +81,23 @@ exports.getSaleBil = async (client_id) => {
         },
       ],
     });
-    //    console.log("hello Deep",salesorders);
 
-    const reportData = salesorders.rows.map((salesorders) => ({
-      client_name: salesorders.sales.client.name,
-      Categoryname: salesorders.category,
-      gross_weight: salesorders.gross_weight,
-      net_weight: salesorders.net_weight,
-      stone_weight: salesorders.stone_weight,
-      rate: salesorders.rate,
-      amount: salesorders.amount,
+    if (!salesorders.rows.length) {
+      return { success: false, message: "No sales orders found for the given client." };
+    }
+
+    const reportData = salesorders.rows.map(order => ({
+      client_name: order.sales.client.name,
+      Categoryname: order.category,
+      gross_weight: order.gross_weight,
+      net_weight: order.net_weight,
+      stone_weight: order.stone_weight,
+      rate: order.rate,
+      amount: order.amount,
     }));
 
-    let total_amount = 0;
+    let total_amount = reportData.reduce((sum, order) => sum + parseInt(order.amount), 0);
 
-    reportData.forEach((reportData) => {
-      total_amount += parseInt(reportData.amount);
-    });
     return exportToPDF(
       reportData,
       total_amount,
@@ -105,7 +106,7 @@ exports.getSaleBil = async (client_id) => {
       salesorders.rows[0].sales.client.email
     );
   } catch (error) {
-    console.error(error);
+    console.error("Error in getSaleBil:", error);
     throw new Error("Failed to fetch sales reports");
   }
 };

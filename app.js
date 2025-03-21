@@ -11,6 +11,8 @@ const rateroutes = require('./routes/rateroutes')
 const reportroutes=require('./routes/reportroutes')
 const stockroutes=require('./routes/stockRoutes')
 const customOrderRoutes = require('./routes/customOrders');
+const branchroutes = require('./routes/branchRoutes');
+const { sequelize } = require('./models');
 
 
 require('./cron/ratecron'); 
@@ -29,15 +31,19 @@ app.use('/sales',salesroutes);
 app.use('/report',reportroutes);
 app.use('/stock',stockroutes);
 app.use('/api/custom-orders', customOrderRoutes);
+app.use('/branch',branchroutes)
 app.use('/api', require('./routes/dailyDataRoutes')); 
-
-// app.get('/error', (req, res, next) => {
-//     const error = new Error('This is a test error');
-//     next(error);
-// });
 app.use(errorHandler);
+
 
 app.listen(port,()=>{
     console.log(`Server is running on port ${port}`);
 
 });
+
+
+const db = require('./models'); // Auto-loads sequelize and models
+
+db.sequelize.sync({ alter: true })
+    .then(() => console.log('Database synced successfully'))
+    .catch((err) => console.error('Error syncing database:', err));

@@ -1,13 +1,8 @@
-const pool = require('../config/config'); // Import database configuration
+const pool = require('../config/config'); 
 
-// Daily stock log (runs at 11:00 PM via cron job)
 exports.generateDailyStockLog = async (req, res,next) => {
   try {
-    // Fetch all stock data
-    
-    const stockData = await pool.query('SELECT * FROM stock_data');
-
-    // Insert each stock into the stock_logs table with the current date
+   const stockData = await pool.query('SELECT * FROM stock_data');
     const date = new Date();
     for (const stock of stockData.rows) {
       const { stock_name, gross_weight, net_weight } = stock;
@@ -22,20 +17,16 @@ exports.generateDailyStockLog = async (req, res,next) => {
   } catch (error) {
     next(error);
     console.error('Error generating stock log:', error);
-    // res.status(500).json({ error: 'Internal server error.' });
   }
 };
 
 // Update Rate Master (runs at 1:00 AM via cron job)
 exports.updateRateMaster = async (req, res,next) => {
   try {
-    // Delete the old record
     await pool.query('DELETE FROM rate_master');
-
-    // Insert a new rate (example: hardcoded; replace with dynamic data if needed)
     const newRate = {
-      gold_rate: 6000, // Example rate for gold
-      silver_rate: 750, // Example rate for silver
+      gold_rate: 6000, 
+      silver_rate: 750, 
       updated_at: new Date(),
     };
 
@@ -48,6 +39,5 @@ exports.updateRateMaster = async (req, res,next) => {
   } catch (error) { 
     next(error);
     console.error('Error updating rate master:', error);
-    // res.status(500).json({ error: 'Internal server error.' });
   }
 };
