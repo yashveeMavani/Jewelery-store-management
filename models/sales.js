@@ -21,6 +21,11 @@ module.exports = (sequelize, DataTypes) => {
           type: DataTypes.DECIMAL(10, 2),
           allowNull: false,
       },
+      discount: {
+        type: DataTypes.DECIMAL(10, 2), 
+        allowNull: true,
+        defaultValue: 0.00,
+      },
       borrowed_amount: {
           type: DataTypes.DECIMAL(10, 2),
           allowNull: false,
@@ -33,8 +38,26 @@ module.exports = (sequelize, DataTypes) => {
       branch_id: {
         type: DataTypes.INTEGER,
         allowNull: false,
-        references: { model: 'branch', key: 'id' } // Foreign Key
-    }
+        references: { model: 'branch', key: 'id' } 
+    },
+    currency: {
+        type: DataTypes.STRING,
+        allowNull: false,
+        defaultValue: 'INR', 
+      },
+      exchange_rate: {
+        type: DataTypes.DECIMAL(10, 4),
+        allowNull: false,
+        defaultValue: 1.0, 
+      },
+      financial_year_id: {
+        type: DataTypes.INTEGER,
+        allowNull: false, 
+        references: {
+          model: 'financial_years',
+          key: 'id',
+        },
+      },
   });
 
   return Sales;

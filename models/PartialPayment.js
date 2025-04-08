@@ -23,7 +23,15 @@ module.exports = (sequelize, DataTypes) => {
             model: 'branch',  
             key: 'id'
         }
-    }
+    },
+    financial_year_id: {
+        type: DataTypes.INTEGER,
+        allowNull: false, 
+        references: {
+          model: 'financial_years',
+          key: 'id',
+        },
+      },
   });
 
   return PartialPayment;

@@ -16,6 +16,14 @@ module.exports = (sequelize, DataTypes) => {
               key: 'id',
           },
       },
+      supplier_id: { 
+        type: DataTypes.INTEGER,
+        allowNull: false,
+        references: {
+            model: 'Suppliers',
+            key: 'id',
+        },
+    },
       opposite_account: {
           type: DataTypes.STRING,
           defaultValue: 'Purchase',
@@ -32,10 +40,29 @@ module.exports = (sequelize, DataTypes) => {
         model: 'branch',
         key: 'id'
     }
-}
+},
+currency: {
+    type: DataTypes.STRING,
+    allowNull: false,
+    defaultValue: 'INR', 
+  },
+  exchange_rate: {
+    type: DataTypes.DECIMAL(10, 4),
+    allowNull: false,
+    defaultValue: 1.0, 
+  },
+  financial_year_id: {
+    type: DataTypes.INTEGER,
+    allowNull: false, 
+    references: {
+      model: 'financial_years',
+      key: 'id',
+    },
+  },
 }, { tableName: 'purchases' });
 Purchase.associate = (models) => {
     Purchase.belongsTo(models.Branch, { foreignKey: 'branch_id' });
+    Purchase.belongsTo(models.Supplier, { foreignKey: 'supplier_id', as: 'supplier' }); 
 };
 
   return Purchase;

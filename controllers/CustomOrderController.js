@@ -68,6 +68,7 @@ module.exports = {
   
       const { clientId, metalType, kt, netWeight, grossWeight, approxValue } = req.body;
       const branch_id = req.user.branch_id;
+      const financial_year_id = req.user.financial_year;
       
       if (!clientId || !metalType || !kt || !netWeight || !branch_id) {
         return res.status(400).json({ message: "Missing required fields" });
@@ -83,7 +84,8 @@ module.exports = {
         netWeight,
         grossWeight: grossWeight || null,
         approxValue: approxValue || null,
-        branch_id
+        branch_id,
+        financial_year_id,
       });
   
       res
@@ -98,7 +100,8 @@ module.exports = {
     try {
       const { fromDate, toDate, search } = req.query;
       const branch_id = req.user.branch_id;
-      const query = {branch_id};
+      const financial_year_id = req.user.financial_year;
+      const query = {branch_id, financial_year_id};
   
       if (fromDate && toDate) {
         query.createdAt = {
@@ -125,11 +128,13 @@ module.exports = {
   viewOrder: async (req, res, next) => {
     try {
       const branch_id  = req.user.branch_id;
-  
+      const financial_year_id = req.user.financial_year;
+
       const order = await CustomOrder.findOne({
         where: {
           id: req.params.id,
           branch_id,
+          financial_year_id,
         },
       });
   
@@ -146,11 +151,13 @@ module.exports = {
   deleteOrder: async (req, res, next) => {
     try {
       const branch_id  = req.user.branch_id;
+      const financial_year_id = req.user.financial_year;
   
       const order = await CustomOrder.findOne({
         where: {
           id: req.params.id,
           branch_id,
+          financial_year_id,
         },
       });
   

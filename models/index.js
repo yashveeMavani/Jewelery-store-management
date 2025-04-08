@@ -18,9 +18,10 @@ if (config.use_env_variable) {
 fs.readdirSync(__dirname)
     .filter(file => file.indexOf('.') !== 0 && file !== basename && file.slice(-3) === '.js')
     .forEach(file => {
-        console.log(`Loading model: ${file}`);  
+        // console.log(`Loading model: ${file}`);  
         const model = require(path.join(__dirname, file))(sequelize, DataTypes);
-        console.log(model)
+        // console.log(model)
+        console.log(`Loading model: ${model.name}`);
         db[model.name] = model;
     });
 
@@ -52,7 +53,7 @@ if (db.PurchaseOrders && db.Branch) {
 
 if (db.Purchase && db.Branch) {
     db.Purchase.belongsTo(db.Branch, { foreignKey: 'branch_id' });
-    db.Branch.hasMany(db.Purchase, { foreignKey: 'branch_id' }); // Add this to ensure bidirectional relation
+    db.Branch.hasMany(db.Purchase, { foreignKey: 'branch_id' }); 
 }
 
 // Sale -> Branch
@@ -130,6 +131,18 @@ if (db.Client && db.CustomOrder) {
     db.Client.hasMany(db.CustomOrder, { foreignKey: 'clientId', as: 'customOrders' });
     db.CustomOrder.belongsTo(db.Client, { foreignKey: 'clientId' });
 }
+
+// Supplier <-> Branch
+if (db.Supplier && db.Branch) {
+    db.Supplier.belongsTo(db.Branch, { foreignKey: 'branch_id', as: 'branch' });
+    db.Branch.hasMany(db.Supplier, { foreignKey: 'branch_id', as: 'suppliers' });
+  }
+  
+  // Supplier <-> Purchase
+  if (db.Supplier && db.Purchase) {
+    db.Supplier.hasMany(db.Purchase, { foreignKey: 'supplier_id', as: 'purchases' });
+    db.Purchase.belongsTo(db.Supplier, { foreignKey: 'supplier_id', as: 'supplier' });
+  }
 
 // Sequelize instance
 db.sequelize = sequelize;

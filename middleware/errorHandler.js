@@ -1,7 +1,7 @@
-const LogError = require('../models/log_error');
+const { log_error } = require("../models");
 const nodemailer = require('nodemailer');
 
-async function errorHandler(err, req, res, next) {
+async function errorHandler(err, req, res,next) {
     console.error('Error Caught:', err.message);
 
     const route = req.originalUrl;
@@ -9,7 +9,8 @@ async function errorHandler(err, req, res, next) {
     const errorMessage = err.message || 'Unknown error occurred';
 
     try {
-        await LogError.create({
+        console.log('Logging error to DB...');
+        await log_error.create({
             route,
             payload,
             error_message: errorMessage,
@@ -39,7 +40,7 @@ async function sendErrorNotification(route, payload, errorMessage) {
     const mailOptions = {
         from: 'yashveemavani@gmail.com',
         to: 'yashveemavani@gmail.com',  
-        subject: '🚨 Jewellery Store System - Error Alert',
+        subject: 'Jewellery Store System - Error Alert',
         html: `
             <h3>API Error Notification</h3>
             <p><strong>Route:</strong> ${route}</p>

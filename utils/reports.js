@@ -20,7 +20,7 @@ exports.exportToPDF = async(res, data, templateName, filename) => {
     const templateHtml = fs.readFileSync(templatePath, 'utf-8');
     const compiledTemplate = hbs.compile(templateHtml);
 
-    const html = compiledTemplate({ data });
+    const html = compiledTemplate({ ...data});
    
     
 

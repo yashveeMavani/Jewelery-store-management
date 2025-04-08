@@ -7,6 +7,8 @@ exports.getPurchaseCsvReport = async (req, res, next) => {
   try {
       const { page = 1, limit = 10, client_id, date_from, date_to } = req.query;
       const branch_id = req.user.branch_id; 
+      const financial_year_id = req.user.financial_year;
+
       const [purchaseOrders] = await sequelize.query(
           `CALL GetPurchaseReport(:client_id, :date_from, :date_to, :page, :limit, :branch_id)`,
           {
@@ -16,7 +18,8 @@ exports.getPurchaseCsvReport = async (req, res, next) => {
                   date_to, 
                   page: parseInt(page), 
                   limit: parseInt(limit), 
-                  branch_id
+                  branch_id,
+                  financial_year_id,
               }
           }
       );
@@ -37,6 +40,8 @@ exports.getPurchasePdfReport = async (req, res, next) => {
   try {
       const { page = 1, limit = 10, client_id, date_from, date_to} = req.query;
       const branch_id = req.user.branch_id;
+      const financial_year_id = req.user.financial_year;
+
       const [purchaseOrders] = await sequelize.query(
           `CALL GetPurchasePdfReport(:client_id, :date_from, :date_to, :page, :limit_value, :branch_id)`,
           {
@@ -46,10 +51,12 @@ exports.getPurchasePdfReport = async (req, res, next) => {
                   date_to: date_to || null,
                   page: parseInt(page) || 1,
                   limit_value: parseInt(limit) || 10,
-                  branch_id
+                  branch_id,
+                  financial_year_id,
               }
           }
       );
+      console.log("Raw purchaseOrders data:", purchaseOrders);
 
       const purchaseOrdersData = Array.isArray(purchaseOrders) ? purchaseOrders : [purchaseOrders];
 
@@ -76,6 +83,7 @@ exports.getPurchasePdfReport = async (req, res, next) => {
 
   } catch (error) {
       console.error("Error in getPurchasePdfReport:", error);
+      next(error);
       res.status(500).json({ success: false, message: "Internal Server Error" });
   }
 };
@@ -88,33 +96,45 @@ exports.getSalesCsvReport = async (req, res, next) => {
           limit = 10, 
           client_id, 
           date_from, 
-          date_to, 
-         
+          date_to,    
       } = req.query;
+
       const branch_id = req.user.branch_id;
+      const financial_year_id = req.user.financial_year;
+      console.log("Query Parameters:", {
+        client_id,
+        date_from,
+        date_to,
+        page: parseInt(page, 10),
+        limit: parseInt(limit, 10),
+        branch_id,
+        financial_year_id,
+      });
+
       const [salesOrders] = await sequelize.query(
           `CALL GetSalesReport(:client_id, :date_from, :date_to, :page, :limit, :branch_id)`,
+          
           {
               replacements: { 
-                  client_id, 
-                  date_from, 
-                  date_to, 
-                  page: parseInt(page, 10), 
-                  limit: parseInt(limit, 10), 
-                  branch_id
+                client_id: client_id || null, 
+              date_from: date_from || null,
+             date_to: date_to || null,
+              page: parseInt(page, 10),
+              limit: parseInt(limit, 10),
+              branch_id,
+              financial_year_id,
               }
           }
       );
 
       console.log("Sales Orders:", salesOrders); 
 
-      const salesData = Array.isArray(salesOrders) ? salesOrders : [salesOrders];
-      if (!salesData.length || (salesData.length === 1 && Object.keys(salesData[0]).length === 0)) {
+      if (!salesOrders || salesOrders.length === 0) {
           return res.status(404).json({ msg: "data not found" });
       }
-
-      res.status(200).json(salesData);
-
+    
+      res.status(200).json(salesOrders);
+      return exportToCSV(res, salesOrders, "sales_report.csv");
   } catch (error) {
       console.error("Error fetching sales report:", error);
       next(error);
@@ -132,7 +152,7 @@ exports.getSalesPdfReport = async (req, res, next) => {
         } = req.query;
   
         const branch_id = req.user.branch_id; 
-  
+        const financial_year_id = req.user.financial_year;
         if (!branch_id) {
             return res.status(400).json({ success: false, message: "Branch ID is required" });
         }
@@ -148,24 +168,26 @@ exports.getSalesPdfReport = async (req, res, next) => {
                     date_to: date_to || null,
                     page: parsedPage || 1,
                     limit: parsedLimit || 10,
-                    branch_id 
+                    branch_id ,
+                    financial_year_id,
                 }
             }
         );
   
         console.log("Raw salesOrders data:", salesOrders);
-        if (!salesOrders || !salesOrders.length || (salesOrders.length === 1 && Object.keys(salesOrders[0]).length === 0)) {
+     
+        if (!salesOrders) {
             return res.status(404).json({ success: false, message: "No sales data found for the given criteria" });
         }
-        const reportData = salesOrders.map((row) => ({
-            client_name: row.client_name || "N/A", 
-            Categoryname: row.Categoryname || "N/A", 
-            gross_weight: row.gross_weight || 0,
-            net_weight: row.net_weight || 0,
-            stone_weight: row.stone_weight || 0,
-            rate: row.rate || 0,
-            amount: row.amount || 0
-        }));
+        const reportData = {
+            client_name: salesOrders.client_name || "N/A", 
+            Categoryname:  salesOrders.Categoryname || "N/A", 
+            gross_weight:  salesOrders.gross_weight || 0,
+            net_weight:  salesOrders.net_weight || 0,
+            stone_weight:  salesOrders.stone_weight || 0,
+            rate:  salesOrders.rate || 0,
+            amount:  salesOrders.amount || 0
+        }
         return exportToPDF(
             res,
             reportData,
@@ -183,6 +205,7 @@ exports.getBalanceSheetCsvReport = async (req, res, next) => {
   try {
       const { date_from, date_to} = req.query;  
       const branch_id = req.user.branch_id; 
+      const financial_year_id = req.user.financial_year;
       console.log("Query Params:", { date_from, date_to, branch_id });
 
       const [balanceSheet] = await sequelize.query(
@@ -191,7 +214,8 @@ exports.getBalanceSheetCsvReport = async (req, res, next) => {
               replacements: { 
                   date_from, 
                   date_to,
-                  branch_id 
+                  branch_id ,
+                  financial_year_id,
               },
           }
       );
@@ -216,11 +240,11 @@ exports.getBalanceSheetPdfReport = async (req, res, next) => {
   try {
     
       const branch_id = req.user.branch_id; 
-
+      const financial_year_id = req.user.financial_year;
       const [rowsRaw] = await sequelize.query(
           `CALL GetBalanceSheetPdfReport(:branch_id)`, 
           {
-              replacements: { branch_id }
+              replacements: { branch_id ,financial_year_id}
           }
       );
 

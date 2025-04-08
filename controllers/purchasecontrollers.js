@@ -11,8 +11,13 @@ exports.createPurchase = async (req, res, next) => {
     if (userrole !== 'super_admin' && req.body.branch_id && req.body.branch_id !== branch_id) {
       return res.status(403).json({ success: false, message: 'You are not authorized to create purchases for this branch.' });
     }
+    if (!req.body.supplier_id) {
+      return res.status(400).json({ success: false, message: 'Supplier ID is required.' });
+    }
 
-    const purchaseData = { ...req.body, branch_id };
+    const purchaseData = {  ...req.body, 
+      branch_id: req.user.branch_id, 
+      financial_year_id: req.user.financial_year  };
     const purchase = await purchaseService.createPurchase(purchaseData);
 
     console.log('Purchase Created:', purchase);
@@ -34,7 +39,8 @@ exports.listPurchases = async (req, res,next) => {
         const listData = userrole === 'super_admin'
       ? { ...req.query }
       : { ...req.query, branch_id };
-    const purchases = await purchaseservices.listPurchase(listData);
+      console.log("List Data Passed to Service:", listData);
+    const purchases = await purchaseservices.listPurchase({...listData, financial_year_id: req.user.financial_year} );
     if (purchases.count == 0)
       return res
         .status(200)
@@ -49,9 +55,9 @@ exports.listPurchases = async (req, res,next) => {
 exports.getPurchase = async (req, res,next) => {
   try {
     const { id } = req.params;
-    const { userrole, branch_id } = req.user;
+    const { branch_id } = req.user;
 
-    const purchase = await purchaseservices.getPurchase(id, branch_id);
+    const purchase = await purchaseservices.getPurchase(id, branch_id,req);
 
     if (!purchase) {
       return res

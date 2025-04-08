@@ -3,12 +3,12 @@ const bilservices = require("../services/bilservices");
 const { updateStockFromSales } = require("./stockController");
 const partialPaymentServices = require("../services/partialPaymentServices");
 
-exports.createSales = async (req, res, next) => {
+exports.createSales = async (req, res,next) => {
   try {
-    const { userrole, branch_id } = req.user; 
-    const { total_invoice_amount, borrowed_amount = 0 } = req.body;
+    const userrole = req.user.userrole; 
+    const branch_id = req.user.branch_id; 
+    const { total_invoice_amount, borrowed_amount = 0 ,discount = 0 } = req.body;
 
-    // Only super_admin or admin can create sales
     if (userrole !== "super_admin" && userrole !== "admin") {
       return res.status(403).json({ success: false, message: "You are not authorized to create sales." });
     }
@@ -16,10 +16,13 @@ exports.createSales = async (req, res, next) => {
     if (borrowed_amount > total_invoice_amount) {
       return res.status(400).json({ success: false, message: "Borrowed amount cannot exceed total invoice amount." });
     }
-
+    if (discount > total_invoice_amount) {
+      return res.status(400).json({ success: false, message: "Discount cannot exceed total invoice amount." });
+    }
     req.body.branch_id = branch_id;
-    req.body.net_invoice_amount = total_invoice_amount - borrowed_amount; 
-    const sales = await salesservices.createSales(req.body);
+    req.body.net_invoice_amount = total_invoice_amount - discount - borrowed_amount;
+
+    const sales = await salesservices.createSales(req.body,req);
     await bilservices.getSaleBil(sales.client_id, res);
     const stockUpdateStatus = await updateStockFromSales(branch_id);
 
@@ -31,21 +34,24 @@ exports.createSales = async (req, res, next) => {
     });
   } catch (error) {
     console.error("Error in createSales:", error.message);
+   
     next(error);
   }
 };
+
+
 
 exports.listSales = async (req, res, next) => {
   try {
     const { userrole, branch_id } = req.user; 
     const listData = { ...req.query, branch_id };
 
-    // Super Admin can view all sales; others can only view sales for their assigned branch
+
     if (userrole !== "super_admin") {
       listData.branch_id = branch_id;
     }
 
-    const sales = await salesservices.listSales(listData);
+    const sales = await salesservices.listSales(listData,req);
 
     if (sales.count === 0) {
       return res.status(200).json({ success: true, message: "No sales data found." });
@@ -63,7 +69,7 @@ exports.getSales = async (req, res, next) => {
     const { id } = req.params;
     const { branch_id } = req.user; 
 
-    const sales = await salesservices.getSales(id, branch_id);
+    const sales = await salesservices.getSales(id, branch_id,req);
 
     if (!sales) {
       return res.status(404).json({ success: false, message: "Sales not found." });
@@ -81,12 +87,12 @@ exports.deleteSales = async (req, res, next) => {
     const { id } = req.params;
     const { userrole, branch_id } = req.user; 
 
-    // Only super_admin or admin can delete sales
+   
     if (userrole !== "super_admin" && userrole !== "admin") {
       return res.status(403).json({ success: false, message: "You are not authorized to delete sales." });
     }
 
-    await salesservices.deleteSales(id,branch_id);
+    await salesservices.deleteSales(id,branch_id,req);
 
     res.status(200).json({ success: true, message: "Sales deleted successfully." });
   } catch (error) {
@@ -98,7 +104,8 @@ exports.deleteSales = async (req, res, next) => {
 // Partial Payment Endpoints
 exports.createPartialPayment = async (req, res, next) => {
   try {
-    const paymentData = { ...req.body, branch_id: req.user.branch_id };
+    const paymentData = { ...req.body, branch_id: req.user.branch_id,financial_year_id: req.user.financial_year  };
+    console.log("Payment Data in Controller:", paymentData);
     const result = await partialPaymentServices.createPartialPayment(paymentData);
     res.status(201).json({ success: true, data: result });
   } catch (error) {
@@ -109,14 +116,14 @@ exports.createPartialPayment = async (req, res, next) => {
 
 exports.listBorrowedAmounts = async (req, res, next) => {
   try {
-    const { userrole, branch_id } = req.user;
+    const { userrole, branch_id ,financial_year } = req.user;
    
 
     if (userrole !== "super_admin" && userrole !== "admin") {
       return res.status(403).json({ success: false, message: "You are not authorized to view borrowed amounts." });
     }
 
-    const result = await partialPaymentServices.listBorrowedAmounts(branch_id);
+    const result = await partialPaymentServices.listBorrowedAmounts(branch_id,financial_year);
   
     res.status(200).json({ success: true, data: result });
   } catch (error) {
@@ -127,13 +134,13 @@ exports.listBorrowedAmounts = async (req, res, next) => {
 
 exports.getPaidAmountReport = async (req, res, next) => {
   try {
-    const { userrole, branch_id } = req.user;
+    const { userrole, branch_id,financial_year } = req.user;
   
     if (userrole !== "super_admin" && userrole !== "admin") {
       return res.status(403).json({ success: false, message: "You are not authorized to view the paid amount report." });
     }
 
-    const result = await partialPaymentServices.getPaidAmountReport(branch_id);
+    const result = await partialPaymentServices.getPaidAmountReport(branch_id,financial_year);
     
     res.status(200).json({ success: true, data: result });
   } catch (error) {
@@ -144,13 +151,13 @@ exports.getPaidAmountReport = async (req, res, next) => {
 
 exports.getUnpaidAmountReport = async (req, res, next) => {
   try {
-    const { userrole, branch_id } = req.user;
+    const { userrole, branch_id,financial_year } = req.user;
   
     if (userrole !== "super_admin" && userrole !== "admin") {
       return res.status(403).json({ success: false, message: "You are not authorized to view the unpaid amount report." });
     }
 
-    const result = await partialPaymentServices.getUnpaidAmountReport(branch_id);
+    const result = await partialPaymentServices.getUnpaidAmountReport(branch_id,financial_year);
    
     res.status(200).json({ success: true, data: result });
   } catch (error) {

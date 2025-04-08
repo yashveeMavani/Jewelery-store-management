@@ -3,8 +3,9 @@ const router = express.Router();
 const salesController = require('../controllers/salescontrollers');
 const { authenticate, authorize } = require('../middleware/authmiddleware');
 
-router.post('/', authenticate, authorize('super_admin', 'admin'), salesController.createSales);
 
+router.post('/', authenticate, authorize('super_admin', 'admin'), salesController.createSales);
+router.post('/partial-payment', authenticate, authorize('super_admin', 'admin'), salesController.createPartialPayment);
 router.get('/', authenticate, salesController.listSales);
 
 router.get('/borrowed-amounts', authenticate, authorize('super_admin', 'admin'), salesController.listBorrowedAmounts);

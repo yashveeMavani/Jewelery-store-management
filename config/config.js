@@ -7,6 +7,7 @@ module.exports = {
         database: process.env.DB_NAME || "jewelry_store",
         host: process.env.DB_HOST || "localhost",
         dialect: "mysql",
+        logging: false,
         timezone: '+00:00',
         dialectOptions: {
             timezone: 'Z'
@@ -18,6 +19,7 @@ module.exports = {
         database: process.env.DB_NAME,
         host: process.env.DB_HOST,
         dialect: "mysql",
+        logging: false,
         timezone: '+00:00',
         dialectOptions: {
             timezone: 'Z'

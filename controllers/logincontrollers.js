@@ -1,5 +1,5 @@
 const jwt = require("jsonwebtoken");
-const { User} = require("../models"); 
+const { User, FinancialYear} = require("../models"); 
 const jwt_secret = "helloYashvee"; 
 
 exports.login = async (req, res, next) => {
@@ -16,11 +16,19 @@ exports.login = async (req, res, next) => {
     if (password !== user.password) {
       return res.status(401).json({ error: "Invalid username or password." });
     }
+    // Fetch the current financial year
+    const financialYear = await FinancialYear.findOne({ where: { current_flag: true } });
+    if (!financialYear) {
+      return res.status(500).json({ success: false, message: 'No active financial year found.' });
+    }
+
+
     const token = jwt.sign(
       {
         user_id: user.id,
         userrole: user.role,
-        branch_id: user.branch_id || (user.Branch ? user.Branch.id : null) 
+        branch_id: user.branch_id || (user.Branch ? user.Branch.id : null) ,
+        financial_year: financialYear.id,
       },
       jwt_secret, 
       { expiresIn: "1d" } 
@@ -35,6 +43,7 @@ exports.login = async (req, res, next) => {
         username: user.username,
         role: user.role,
         branch_id: user.branch_id,
+        financial_year: financialYear.id,
       },
     });
   } catch (err) {
